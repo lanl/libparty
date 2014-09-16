@@ -1,0 +1,3 @@
+mpicc src/*.cc -std=c++11 -L/home/kinsey/software/boost_1_54_0/stage/lib -lboost_mpi -lboost_serialization -I/home/kinsey/software/boost_1_54_0 -c -openmp  -I/home/kinsey/software/H5Part-1.6.6/build/include -L/home/kinsey/software/H5Part-1.6.6/build/lib -lH5Part -lhdf5 -lz -g -wd1478 -tbb
+mpicc mpi_test.cc hashtable_soa.o libparty_soa.o libparty.o calcdens_soa.o libparty_h5part_soa.o libparty_h5part.o hashtable.o -std=c++11 -L/home/kinsey/software/boost_1_54_0/stage/lib -lboost_mpi -lboost_serialization -I/home/kinsey/software/boost_1_54_0 -I./src -g -o mpitest -openmp  -I/home/kinsey/software/H5Part-1.6.6/build/include -L/home/kinsey/software/H5Part-1.6.6/build/lib -lH5Part -lhdf5 -lz -wd1478 -tbb
+#mpirun -n 2 ./mpitest

@@ -1,0 +1,202 @@
+This is the README file for the Particle Library code libparty.
+----------------------------------------------------------
+
+See LICENSE file for copyright information. This software is distributed
+under the Apache 2.0 license.
+
+libparty - Particle Library - 
+is an agnostic particle code created by Matt Kinsey and Verinder Rana
+at the 2014 Computational Physics Workshop at Los Alamos National Lab.
+The code is agnostic in the sense that we have capabilities to carry
+out Particle-In-Cell, Molecular Dynamics and abstract particle-particle
+simulations.
+
+In the current version it employs a Nearest Neighbor search and a simple
+Euler advection scheme.
+
+1. Prerequisites
+----------------
+
+The current version is written in C++ and Fortran 90 and is meant to be compiled with Intel compilers.
+GNU compilers have not been thoroughly tested with this code and might not be entirely compatible.
+The library also requires to have BOOST and H5Part installed. The run scripts are designed for Unix systems 
+and will work on a Linux PC. We discuss that more in section 7. 
+
+
+2. Compiling libparty
+-----------------
+
+The directory structure resulting from unpacking the tar files should look
+like this:
+
+	src/		...	containing the fortran90/c++ source code
+	test/		...	some code to get scaling results of nearest neighbor search
+	lib/	        ...	a folder for the libparty object file
+	config/         ...     configuration files to get libparty to build
+	
+
+To compile, stay in the top level director of libparty
+
+Then build and install the code with:
+
+	$ ./configure
+        $ make
+	
+After successful completion of these steps, libparty is completely
+installed on the system and can be used as expected. For a compact
+summary of all the available configuration options, run the command
+
+  $ ./configure --help
+
+  --enable-debug          compiles code with debug flags
+  --enable-bounds-check   compiles code with bounds check flags
+  --enable-prof           compiles code with profiling flags
+  --enable-openmp         compiles code with openmp
+  --enable-mic-offload    compiles code with mic
+  --enable-mpi            compiles code with mpi library
+  --enable-mpe            compiles code with mpe library
+  --enable-opencl         compiles code with opencl library
+  --enable-detailed-timing compiles code with detailed timing on
+  --enable-write-mem-usage compiles code with write memory usage on
+  --disable-dependency-tracking  speeds up one-time build
+  --enable-dependency-tracking   do not reject slow dependency extractors
+  --enable-shared[=PKGS]  build shared libraries [default=yes]
+  --enable-static[=PKGS]  build static libraries [default=yes]
+  --enable-fast-install[=PKGS]
+                          optimize for fast installation [default=yes]
+  --disable-libtool-lock  avoid locking (might break parallel builds)
+  --disable-largefile     omit support for large files
+
+The libparty specific aspects of the configuration, compilation and
+installation process are discussed in the following sections.
+
+
+3. Using the Right C and C++ Compilers
+--------------------------------------
+
+The configure script of the libparty, as you can see by using its `--help'
+option, besides recognizing `CC', `CXX', `CFLAGS', `CXXFLAGS' and
+other environment variables, provides four switches with which you can
+select the compilers and compilers' options to use for building the
+library.  These switches are
+
+  --with-cc=XXX           use XXX as the C compiler
+  --with-cxx=XXX          use XXX as the C++ compiler
+  --with-cflags=XXX       add XXX to the options for the C compiler
+  --with-cxxflags=XXX     add XXX to the options for the C++ compiler
+
+We stress the importance of using an Intel based compiler. As mentioned earlier,
+we have not tested the GNU compilers as stringently. Here is an example of a configuration 
+that uses the Intel C/C++ compiler version 14.
+By default, libparty is compiled with all the optimizations provided
+by the compiler.
+
+
+4. Configuring for Advanced Architecture
+----------------------------------------
+
+If you are interested in running libparty on advanced architectures such as the Intel MIC
+or GPUs, we provide a configuration for them too. However, we only currently support the
+Intel MIC architecture at the moment. The build for that is still experimental and we will
+release a new version when the build system for the Intel MIC becomes more stable.
+
+module load compilers/intel/14.0.2 mpi/intelmpi-4.1.3.045-mic
+setenv MIC_LD_LIBRARY_PATH /projects/opt/intel/compilers/parallel_studio_xe_2013/composer_xe_2013/lib/mic
+source /projects/opt/intel/compilers/parallel_studio_xe_2013/composer_xe_2013_sp1.2.144/bin/compilervars.csh intel64
+
+5. Example tests
+------------------
+
+There are a small set of basic sanity checks.
+
+cc_test.c	Particle initialization and advection in C on single processor using AOS
+cpp_test.cc	Particle initialization and advection in C++ on a single processor using SOA
+		along with density update of the particles (SPH style)
+fort_test.f90	Same as cc_test.c but for fortran 90
+grid_test.cc	Grid interpolation test; interpolates particle velocities from the grid
+mpi_test.cc	Same as cpp_test.cc but in parallel using SOA
+
+
+To run the sanity checks, run "make check". The tests should run followed by a "Passed" or "Failed" with a 
+diff output. See the gold standards in the test directory for the expected outputs.
+
+Running the tests should give the following:
+
+Running cctest
+   Should give 100 lines of output of the form (3.40891,12.1125,-7.07877) with this being the last line
+
+Running cpptest should produce a particles_soa.h5part file
+
+opening for write on 0
+done step at time 0
+done step at time 0.2
+done step at time 0.4
+done step at time 0.6
+done step at time 0.8
+done step at time 1
+done step at time 1.2
+done step at time 1.4
+done step at time 1.6
+done step at time 1.8
+done step at time 2
+
+Running f90test
+   Fails if particles_soa.h5part file exists. Do rm particles_soa.h5part if it exists. Output will be:
+
+          10
+ Returned number of particles:           10
+(1,1,1)
+(2,2,2)
+(3,3,3)
+(4,4,4)
+(5,5,5)
+(6,6,6)
+(7,7,7)
+(8,8,8)
+(9,9,9)
+(10,10,10)
+(1.5,1.5,1.5)
+(3,3,3)
+(4.5,4.5,4.5)
+(6,6,6)
+(7.5,7.5,7.5)
+(9,9,9)
+(10.5,10.5,10.5)
+(12,12,12)
+(13.5,13.5,13.5)
+(15,15,15)
+opening for write on 0
+
+Running mpitest -- mpirun -np 2 mpitest
+
+Done setting up system on 0
+Done setting up system on 1
+opening for write on 0
+Done step 0
+Done step 1
+Done step 2
+Done step 3
+Done step 4
+
+(Note: will fail at 8 steps if run that far due to contrived nature of the problem)
+
+6. Specific systems
+-----------------------------------------
+To checkout code:
+   git clone git@darwin:libparty.git
+
+Environment on Darwin -- in .login add
+   module load compilers/intel/14.0.2 mpi/openmpi-1.6.4-intel_14.0.2
+   source /projects/opt/intel/compilers/parallel_studio_xe_2013/composer_xe_2013_sp1.2.144/tbb/bin/tbbvars.csh intel64
+
+Environment on Moonlight -- in .login add
+   module load friendly-testing intel/14.0.2 openmpi/1.6.5 totalview/8.12.0-0
+   source /usr/projects/hpcsoft/toss2.2/common/intel/2013_sp1.2.144/composer_xe_2013_sp1.2.144/tbb/bin/tbbvars.csh intel64
+
+7. Supporting libraries
+
+Builds of hdf5, H5Part and boost are needed. See the setup files for each to
+build these
+
+There is a build of hdf5 on darwin, so only H5Part and boost are needed
+

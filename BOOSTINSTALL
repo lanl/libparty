@@ -1,0 +1,19 @@
+Download http://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz/download
+(NB: 1.55 wont work)
+
+rsync that file to the machine you want to build on
+
+tar xzvf boost_1_54_0.tar.gz
+cd boost_1_54_0
+module purge
+module load compilers/intel/14.0.2
+module load mpi/openmpi-1.8.1-intel_14.0.2
+CC=icc f90=ifort ./bootstrap.sh --with-toolset=intel-linux
+vim ~/user-config.jam and add a line that says "using mpi ;" (with the space before the semicolon)
+CC=icc f90=ifort ./b2 toolset=intel
+export LD_LIBRARY_PATH=/PATH_TO_BOOST/boost_1_54_0/stage/lib:$LD_LIBRARY_CONFIG
+
+(you'll also want to pass compilers the includes i.e. -I/PATH_TO_BOOST/boost_1_54_0/boost)
+
+so now my compiler flags look like this:
+-L/home/kinsey/software/boost_1_54_0/stage/lib -lboost_mpi -lboost_serialization -I/home/kinsey/software/boost_1_54_0/boost

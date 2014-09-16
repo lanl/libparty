@@ -1,0 +1,44 @@
+#Set MIC LIB PATH
+#export MIC_LD_LIBRARY_PATH=/projects/opt/intel/compilers/parallel_studio_xe_2013/composer_xe_2013/lib/mic/
+SRCDIR=./src/
+LIBDIR=./lib/
+INCDIR=./include/
+BUILDDIR=./tmp/
+
+CC=mpicc
+CPP=mpicc #g++
+F90=mpif90 #gfortran
+#CFLAGS=-g -O2 -std=c89 -ansi -lstdc++ -I$(INCDIR) -L$(LIBDIR) -lparty #-fopenmp
+CPPFLAGS=-g -Wall -L/home/kinsey/software/boost_1_54_0/stage/lib -lboost_mpi -lboost_serialization -lstdc++ -I/home/kinsey/software/boost_1_54_0 -I$(INCDIR) -L$(LIBDIR) -lparty -std=c++11 -openmp -I/home/kinsey/software/H5Part-1.6.6/build/include -L/home/kinsey/software/H5Part-1.6.6/build/lib -lH5Part -lhdf5 -lz -wd1478 -tbb
+F90FLAGS=-g -lstdc++ -I$(INCDIR) -L/home/kinsey/software/boost_1_54_0/stage/lib -I/home/kinsey/software/boost_1_54_0 -L$(LIBDIR) -lparty -lboost_mpi -lboost_serialization -ltbb -I/home/kinsey/software/H5Part-1.6.6/build/include -L/home/kinsey/software/H5Part-1.6.6/build/lib -lH5Part -lhdf5 -lz
+
+all: clean libparty f90test cpptest mpitest
+
+libparty:
+	mkdir -p $(BUILDDIR)
+	mkdir -p $(LIBDIR)
+	mkdir -p $(INCDIR)
+	$(CPP) $(CPPFLAGS) -g -openmp -lpthread -std=c++0x -fPIC $(SRCDIR)calcdens_soa.cc -c -Wall -O2 -o $(BUILDDIR)calcdens_soa.o
+	$(CPP) $(CPPFLAGS) -g -openmp -lpthread -std=c++0x -fPIC $(SRCDIR)libparty_h5part_soa.cc -c -Wall -O2 -o $(BUILDDIR)libparty_h5part_soa.o
+	$(CPP) $(CPPFLAGS) -g -openmp -lpthread -std=c++0x -fPIC $(SRCDIR)libparty_soa.cc -c -Wall -O2 -o $(BUILDDIR)libparty_soa.o
+	$(CPP) $(CPPFLAGS )-g -openmp -lpthread -std=c++0x -fPIC $(SRCDIR)hashtable_soa.cc -c -Wall -O2 -o $(BUILDDIR)hashtable_soa.o
+	$(CPP) $(CPPFLAGS) -g -openmp -lpthread -std=c++0x -fPIC $(SRCDIR)libparty_wrappers.cc -c -Wall -O2 -o $(BUILDDIR)libparty_wrappers.o
+	$(F90) -g $(F90FLAGS) -fPIC $(SRCDIR)libparty_bindings.f90 -c -O2 -o $(BUILDDIR)libparty_bindings.o
+	$(F90) -fopenmp -L/home/kinsey/software/boost_1_54_0/stage/lib -lboost_mpi -lboost_serialization -I/home/kinsey/software/boost_1_54_0 -g -shared -fPIC $(BUILDDIR){hashtable_soa.o,libparty_bindings.o,libparty_soa.o,libparty_wrappers.o,libparty_h5part_soa.o,calcdens_soa.o} -O2 -ltbb -I/home/kinsey/software/H5Part-1.6.6/build/include -L/home/kinsey/software/H5Part-1.6.6/build/lib -lH5Part -lhdf5 -lz -o $(LIBDIR)libparty.so
+	cp $(SRCDIR)libparty*.hh $(INCDIR)
+	cp $(SRCDIR)libparty*.h $(INCDIR)
+	cp $(SRCDIR)grid.hh $(INCDIR)
+	mv libparty*.mod $(INCDIR)
+	rm -rf $(BUILDDIR)
+
+cpptest:
+	$(CPP) $(CPPFLAGS) cpp_test.cc -o cpptest
+
+mpitest:
+	$(CPP) $(CPPFLAGS) mpi_test.cc -o mpitest
+
+f90test:
+	$(F90) $(F90FLAGS) fort_test.f90 -o f90test
+
+clean:
+	rm -f $(INCDIR)*.mod $(INCDIR)*.h* $(LIBDIR)*.so cctest cpptest f90test
