@@ -1,0 +1,8 @@
+language: cpp
+
+before_install:
+ - sudo apt-get update 
+ - sudo apt-get install libboost-all-dev openmpi-bin libopenmpi-dev
+
+script:
+ - autoreconf -i && ./configure && make && sudo make install
